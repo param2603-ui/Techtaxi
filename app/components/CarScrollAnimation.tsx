@@ -101,11 +101,15 @@ export default function CarScrollAnimation() {
     if (!ctx) return;
 
     const { naturalWidth: iw, naturalHeight: ih } = img;
-    const cw = canvas.width;
-    const ch = canvas.height;
+    const dpr = window.devicePixelRatio || 1;
+    // Context is scaled by dpr, so we must use CSS logical pixels for drawing coordinates
+    const cw = canvas.width / dpr;
+    const ch = canvas.height / dpr;
 
     // Contain-fit with dark background
-    const scale = Math.min(cw / iw, ch / ih) * 1.02; // slight zoom for premium feel
+    // Scale slightly more on mobile for better visibility
+    const isMobile = cw < 768;
+    const scale = Math.min(cw / iw, ch / ih) * (isMobile ? 1.08 : 1.02);
     const sw = iw * scale;
     const sh = ih * scale;
     const dx = (cw - sw) / 2;
@@ -148,7 +152,11 @@ export default function CarScrollAnimation() {
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
     const ctx = canvas.getContext("2d");
-    if (ctx) ctx.scale(dpr, dpr);
+    if (ctx) {
+      // Reset transform before reapplying scale to avoid multiplying
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
     if (loaded) drawFrame(currentFrameRef.current);
   }, [width, height, loaded, drawFrame]);
 
@@ -169,9 +177,9 @@ export default function CarScrollAnimation() {
   });
 
   return (
-    <div ref={containerRef} className="relative h-[400vh]">
+    <div ref={containerRef} className="relative h-[400dvh]">
       {/* Sticky Canvas */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
+      <div className="sticky top-0 h-dvh w-full overflow-hidden">
         <canvas
           ref={canvasRef}
           style={{
@@ -280,9 +288,9 @@ function TextOverlay({
 
   const alignClass =
     align === "left"
-      ? "items-start text-left pl-8 md:pl-20"
+      ? "items-start text-left pl-6 sm:pl-8 md:pl-20"
       : align === "right"
-        ? "items-end text-right pr-8 md:pr-20"
+        ? "items-end text-right pr-6 sm:pr-8 md:pr-20"
         : "items-center text-center";
 
   return (
@@ -297,7 +305,7 @@ function TextOverlay({
           style={{ background: "linear-gradient(90deg, #c9a84c, rgba(201,168,76,0.2))" }}
         />
         <motion.h2
-          className="text-5xl md:text-7xl lg:text-8xl font-semibold tracking-tight text-white/95 leading-[1.05] whitespace-pre-line mb-5"
+          className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-tight text-white/95 leading-[1.05] whitespace-pre-line mb-4 md:mb-5"
           style={{ textShadow: "0 0 80px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.6)" }}
         >
           {headline}
